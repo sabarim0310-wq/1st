@@ -1,0 +1,4 @@
+import random
+cards = ['Ace', 'King', 'Queen', 'Jack', 'Ten']
+random.shuffle(cards)
+print(f"Shuffled cards: {cards}")
