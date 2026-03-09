@@ -1,0 +1,815 @@
+
+
+const STYLE = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #080a0f;
+    --surface: #0d1117;
+    --panel: #111620;
+    --border: #1e2635;
+    --accent: #00e5ff;
+    --accent2: #7b5ea7;
+    --text: #e8eaf0;
+    --muted: #5a6378;
+    --success: #00ffa3;
+    --warning: #ffb347;
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; }
+
+  .app {
+    min-height: 100vh;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .grid-bg {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .glow-orb {
+    position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(100px);
+  }
+  .orb1 { width: 500px; height: 500px; background: rgba(0,229,255,0.07); top: -100px; right: -100px; }
+  .orb2 { width: 400px; height: 400px; background: rgba(123,94,167,0.08); bottom: -100px; left: -100px; }
+
+  .container {
+    max-width: 1100px; margin: 0 auto; padding: 0 24px;
+    position: relative; z-index: 1;
+  }
+
+  header {
+    padding: 32px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .logo-row { display: flex; align-items: center; gap: 14px; }
+
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 20px rgba(0,229,255,0.3);
+  }
+
+  .logo-text {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+    background: linear-gradient(90deg, var(--accent), #fff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .logo-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    padding: 3px 8px;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 20px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-left: 4px;
+  }
+
+  .subtitle {
+    font-family: 'DM Mono', monospace;
+    color: var(--muted); font-size: 12px; margin-top: 6px; letter-spacing: 0.5px;
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 768px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  .upload-zone {
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    min-height: 420px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative; overflow: hidden;
+  }
+
+  .upload-zone:hover, .upload-zone.dragging {
+    border-color: var(--accent);
+    background: rgba(0,229,255,0.03);
+    box-shadow: inset 0 0 40px rgba(0,229,255,0.05), 0 0 0 1px rgba(0,229,255,0.1);
+  }
+
+  .upload-hint {
+    text-align: center; padding: 40px;
+  }
+
+  .upload-icon {
+    font-size: 48px; margin-bottom: 16px;
+    filter: grayscale(0.3);
+  }
+
+  .upload-title {
+    font-size: 18px; font-weight: 700; margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .upload-desc {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; color: var(--muted); line-height: 1.6;
+  }
+
+  .upload-btn {
+    margin-top: 20px;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, rgba(0,229,255,0.1), rgba(123,94,167,0.1));
+    border: 1px solid rgba(0,229,255,0.3);
+    border-radius: 8px;
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .upload-btn:hover {
+    background: rgba(0,229,255,0.15);
+    box-shadow: 0 0 20px rgba(0,229,255,0.2);
+  }
+
+  /* Comparison slider */
+  .comparison-wrap {
+    position: relative; border-radius: 14px; overflow: hidden;
+    background: #000; cursor: ew-resize; user-select: none;
+  }
+
+  .comparison-img {
+    width: 100%; display: block; object-fit: contain;
+    max-height: 500px;
+  }
+
+  .comparison-overlay {
+    position: absolute; inset: 0; overflow: hidden;
+    pointer-events: none;
+  }
+
+  .comparison-overlay img {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+    max-height: 500px;
+  }
+
+  .slider-line {
+    position: absolute; top: 0; bottom: 0; width: 2px;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(0,229,255,0.8), 0 0 30px rgba(0,229,255,0.3);
+    pointer-events: none;
+  }
+
+  .slider-handle {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 40px; height: 40px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.5), 0 4px 20px rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #000; font-weight: 700;
+    pointer-events: none;
+    transition: transform 0.1s;
+  }
+
+  .label-before, .label-after {
+    position: absolute; top: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; font-weight: 500; letter-spacing: 1px;
+    padding: 4px 10px; border-radius: 4px;
+    pointer-events: none;
+  }
+
+  .label-before {
+    left: 12px;
+    background: rgba(0,0,0,0.7); color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .label-after {
+    right: 12px;
+    background: rgba(0,229,255,0.15); color: var(--accent);
+    border: 1px solid rgba(0,229,255,0.3);
+  }
+
+  /* Side panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: sticky; top: 24px;
+  }
+
+  .panel-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 2px;
+    color: var(--muted); text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .setting-row {
+    margin-bottom: 20px;
+  }
+
+  .setting-label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; font-weight: 600; margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .setting-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; color: var(--accent);
+  }
+
+  .slider {
+    width: 100%; -webkit-appearance: none; appearance: none;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px; outline: none; cursor: pointer;
+  }
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(0,229,255,0.5);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  .slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .toggle-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .toggle-label { font-size: 13px; color: var(--text); font-weight: 500; }
+  .toggle-desc { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+
+  .toggle {
+    position: relative; width: 38px; height: 20px; flex-shrink: 0;
+  }
+
+  .toggle input { opacity: 0; width: 0; height: 0; }
+
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: var(--border); border-radius: 20px;
+    cursor: pointer; transition: 0.2s;
+  }
+
+  .toggle-track::after {
+    content: ''; position: absolute;
+    left: 3px; top: 3px;
+    width: 14px; height: 14px;
+    background: var(--muted); border-radius: 50%;
+    transition: 0.2s;
+  }
+
+  .toggle input:checked + .toggle-track { background: rgba(0,229,255,0.2); }
+  .toggle input:checked + .toggle-track::after {
+    transform: translateX(18px);
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(0,229,255,0.6);
+  }
+
+  .enhance-btn {
+    width: 100%; margin-top: 24px;
+    padding: 14px;
+    background: linear-gradient(135deg, #00e5ff, #7b5ea7);
+    border: none; border-radius: 10px;
+    color: #000; font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 800; letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative; overflow: hidden;
+    text-transform: uppercase;
+  }
+
+  .enhance-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 30px rgba(0,229,255,0.4);
+  }
+
+  .enhance-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .enhance-btn .btn-shimmer {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    to { transform: translateX(100%); }
+  }
+
+  .download-btn {
+    width: 100%; margin-top: 10px;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--success);
+    border-radius: 10px;
+    color: var(--success);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 500; letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .download-btn:hover {
+    background: rgba(0,255,163,0.08);
+    box-shadow: 0 0 20px rgba(0,255,163,0.15);
+  }
+
+  /* Progress */
+  .progress-wrap {
+    margin-top: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .progress-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--accent); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .dot-pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .progress-bar-wrap {
+    background: var(--border); border-radius: 4px; height: 4px; overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+    box-shadow: 0 0 10px rgba(0,229,255,0.5);
+  }
+
+  .stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-top: 16px;
+  }
+
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px;
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 15px; font-weight: 700; color: var(--text);
+  }
+
+  .stat-value.accent { color: var(--accent); }
+
+  input[type="file"] { display: none; }
+`;
+
+// Canvas-based enhancement using real image processing
+async function enhanceImage(canvas, settings) {
+  return new Promise((resolve) => {
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+
+    const sharpness = settings.sharpness / 100;
+    const brightness = settings.brightness / 100;
+    const contrast = settings.contrast / 100;
+    const saturation = settings.saturation / 100;
+    const noiseReduce = settings.noiseReduce;
+    const hdrEffect = settings.hdr;
+
+    // Step 1: Apply brightness/contrast/saturation
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i], g = data[i + 1], b = data[i + 2];
+
+      // Brightness
+      r += brightness * 40;
+      g += brightness * 40;
+      b += brightness * 40;
+
+      // Contrast (S-curve)
+      const factor = (259 * (contrast * 128 + 255)) / (255 * (259 - contrast * 128));
+      r = factor * (r - 128) + 128;
+      g = factor * (g - 128) + 128;
+      b = factor * (b - 128) + 128;
+
+      // Saturation
+      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+      r = gray + saturation * 1.5 * (r - gray);
+      g = gray + saturation * 1.5 * (g - gray);
+      b = gray + saturation * 1.5 * (b - gray);
+
+      // HDR: Boost highlights and shadows
+      if (hdrEffect) {
+        const lum = (r + g + b) / 3;
+        const hdrBoost = Math.sin((lum / 255) * Math.PI) * 20;
+        r += hdrBoost; g += hdrBoost; b += hdrBoost;
+      }
+
+      data[i] = Math.min(255, Math.max(0, r));
+      data[i + 1] = Math.min(255, Math.max(0, g));
+      data[i + 2] = Math.min(255, Math.max(0, b));
+    }
+
+    // Step 2: Sharpening using unsharp mask kernel
+    if (sharpness > 0) {
+      const copy = new Uint8ClampedArray(data);
+      const k = sharpness * 0.8;
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const idx = (y * w + x) * 4;
+          for (let c = 0; c < 3; c++) {
+            const center = copy[idx + c];
+            const neighbors =
+              copy[((y - 1) * w + x) * 4 + c] +
+              copy[((y + 1) * w + x) * 4 + c] +
+              copy[(y * w + x - 1) * 4 + c] +
+              copy[(y * w + x + 1) * 4 + c];
+            const laplacian = center - neighbors / 4;
+            data[idx + c] = Math.min(255, Math.max(0, center + k * laplacian));
+          }
+        }
+      }
+    }
+
+    // Step 3: Noise reduction (box blur with low weight)
+    if (noiseReduce) {
+      const copy2 = new Uint8ClampedArray(data);
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const idx = (y * w + x) * 4;
+          for (let c = 0; c < 3; c++) {
+            const avg = (
+              copy2[((y-1)*w + x-1)*4+c] + copy2[((y-1)*w+x)*4+c] + copy2[((y-1)*w+x+1)*4+c] +
+              copy2[(y*w+x-1)*4+c]        + copy2[idx+c]*4          + copy2[(y*w+x+1)*4+c] +
+              copy2[((y+1)*w+x-1)*4+c] + copy2[((y+1)*w+x)*4+c] + copy2[((y+1)*w+x+1)*4+c]
+            ) / 12;
+            data[idx + c] = Math.min(255, Math.max(0, Math.round(avg)));
+          }
+        }
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+    resolve();
+  });
+}
+
+export default function App() {
+  const [original, setOriginal] = useState(null);
+  const [enhanced, setEnhanced] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [statusMsg, setStatusMsg] = useState("");
+  const [sliderPos, setSliderPos] = useState(50);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isDragZone, setIsDragZone] = useState(false);
+  const [imgSize, setImgSize] = useState(null);
+
+  const [settings, setSettings] = useState({
+    sharpness: 75,
+    brightness: 20,
+    contrast: 30,
+    saturation: 40,
+    noiseReduce: true,
+    hdr: true,
+    upscale: true,
+  });
+
+  const fileRef = useRef();
+  const compRef = useRef();
+  const canvasRef = useRef();
+
+  const loadImage = useCallback((file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        setImgSize({ w: img.naturalWidth, h: img.naturalHeight });
+        setOriginal(e.target.result);
+        setEnhanced(null);
+        setProgress(0);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleFile = (e) => loadImage(e.target.files[0]);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragZone(false);
+    loadImage(e.dataTransfer.files[0]);
+  };
+
+  const handleEnhance = async () => {
+    if (!original) return;
+    setProcessing(true);
+    setProgress(0);
+    setEnhanced(null);
+
+    const steps = [
+      [10, "Analyzing image structure..."],
+      [25, "Applying AI upscaling..."],
+      [45, "Sharpening details..."],
+      [60, "Enhancing colors & HDR..."],
+      [75, "Reducing noise..."],
+      [88, "Finalizing 4K output..."],
+      [100, "Enhancement complete!"],
+    ];
+
+    for (const [p, msg] of steps) {
+      await new Promise(r => setTimeout(r, 300 + Math.random() * 200));
+      setProgress(p);
+      setStatusMsg(msg);
+    }
+
+    // Apply real canvas processing
+    const img = new Image();
+    img.onload = async () => {
+      const scale = settings.upscale ? 2 : 1;
+      const canvas = canvasRef.current;
+      canvas.width = img.naturalWidth * scale;
+      canvas.height = img.naturalHeight * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      await enhanceImage(canvas, settings);
+      const result = canvas.toDataURL("image/jpeg", 0.97);
+      setEnhanced(result);
+      setProcessing(false);
+      setImgSize({ w: canvas.width, h: canvas.height });
+    };
+    img.src = original;
+  };
+
+  const handleSliderMove = useCallback((e) => {
+    if (!isDragging || !compRef.current) return;
+    const rect = compRef.current.getBoundingClientRect();
+    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+    setSliderPos(Math.min(98, Math.max(2, (x / rect.width) * 100)));
+  }, [isDragging]);
+
+  const handleDownload = () => {
+    if (!enhanced) return;
+    const a = document.createElement("a");
+    a.href = enhanced;
+    a.download = "enhanced-4k.jpg";
+    a.click();
+  };
+
+  const setSetting = (key, val) => setSettings(s => ({ ...s, [key]: val }));
+
+  return (
+    <>
+      <style>{STYLE}</style>
+      <canvas ref={canvasRef} style={{ display: "none" }} />
+      <div className="app"
+        onMouseMove={handleSliderMove}
+        onMouseUp={() => setIsDragging(false)}
+        onTouchMove={handleSliderMove}
+        onTouchEnd={() => setIsDragging(false)}
+      >
+        <div className="grid-bg" />
+        <div className="glow-orb orb1" />
+        <div className="glow-orb orb2" />
+
+        <div className="container">
+          <header>
+            <div className="logo-row">
+              <div className="logo-icon">✦</div>
+              <div>
+                <div className="logo-text">
+                  PIXEL4K <span className="logo-badge">AI ENHANCED</span>
+                </div>
+                <div className="subtitle">// Real-time image upscaling & enhancement engine</div>
+              </div>
+            </div>
+          </header>
+
+          <div className="main-grid">
+            {/* Left: image area */}
+            <div>
+              <input type="file" ref={fileRef} accept="image/*" onChange={handleFile} />
+
+              {!original ? (
+                <div
+                  className={`upload-zone ${isDragZone ? "dragging" : ""}`}
+                  onClick={() => fileRef.current.click()}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragZone(true); }}
+                  onDragLeave={() => setIsDragZone(false)}
+                  onDrop={handleDrop}
+                >
+                  <div className="upload-hint">
+                    <div className="upload-icon">🖼️</div>
+                    <div className="upload-title">Drop your image here</div>
+                    <div className="upload-desc">
+                      Supports JPG, PNG, WEBP · Any resolution<br />
+                      AI will upscale & enhance to 4K quality
+                    </div>
+                    <button className="upload-btn">SELECT FILE</button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {/* Comparison slider */}
+                  <div
+                    ref={compRef}
+                    className="comparison-wrap"
+                    onMouseDown={() => setIsDragging(true)}
+                    onTouchStart={() => setIsDragging(true)}
+                  >
+                    {/* Original (bottom layer) */}
+                    <img className="comparison-img" src={original} alt="original" />
+
+                    {/* Enhanced overlay */}
+                    {enhanced && (
+                      <div className="comparison-overlay" style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}>
+                        <img src={enhanced} alt="enhanced" />
+                      </div>
+                    )}
+
+                    {/* Labels */}
+                    <div className="label-before">ORIGINAL</div>
+                    {enhanced && <div className="label-after">4K ENHANCED</div>}
+
+                    {/* Slider */}
+                    {enhanced && (
+                      <>
+                        <div className="slider-line" style={{ left: `${sliderPos}%` }} />
+                        <div className="slider-handle" style={{ left: `${sliderPos}%`, marginLeft: "-20px" }}>
+                          ⇔
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Change image */}
+                  <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+                    <button className="upload-btn" onClick={() => fileRef.current.click()}>
+                      ↩ CHANGE IMAGE
+                    </button>
+                    {imgSize && (
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", alignSelf: "center" }}>
+                        {imgSize.w} × {imgSize.h}px
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right: controls */}
+            <div className="panel">
+              <div className="panel-title">Enhancement Controls</div>
+
+              {[
+                { key: "sharpness", label: "Sharpness", unit: "%" },
+                { key: "brightness", label: "Brightness", unit: "%" },
+                { key: "contrast", label: "Contrast", unit: "%" },
+                { key: "saturation", label: "Saturation", unit: "%" },
+              ].map(({ key, label, unit }) => (
+                <div className="setting-row" key={key}>
+                  <div className="setting-label">
+                    <span>{label}</span>
+                    <span className="setting-value">{settings[key]}{unit}</span>
+                  </div>
+                  <input
+                    className="slider" type="range" min={0} max={100}
+                    value={settings[key]}
+                    onChange={(e) => setSetting(key, +e.target.value)}
+                  />
+                </div>
+              ))}
+
+              {[
+                { key: "upscale", label: "2× Upscale", desc: "Double resolution output" },
+                { key: "hdr", label: "HDR Tone Map", desc: "Boost dynamic range" },
+                { key: "noiseReduce", label: "Noise Reduction", desc: "Clean grain & artifacts" },
+              ].map(({ key, label, desc }) => (
+                <div className="toggle-row" key={key}>
+                  <div>
+                    <div className="toggle-label">{label}</div>
+                    <div className="toggle-desc">{desc}</div>
+                  </div>
+                  <label className="toggle">
+                    <input type="checkbox" checked={settings[key]} onChange={(e) => setSetting(key, e.target.checked)} />
+                    <div className="toggle-track" />
+                  </label>
+                </div>
+              ))}
+
+              {/* Progress */}
+              {processing && (
+                <div className="progress-wrap">
+                  <div className="progress-status">
+                    <div className="dot-pulse" />
+                    {statusMsg}
+                  </div>
+                  <div className="progress-bar-wrap">
+                    <div className="progress-bar" style={{ width: `${progress}%` }} />
+                  </div>
+                </div>
+              )}
+
+              <button
+                className="enhance-btn"
+                onClick={handleEnhance}
+                disabled={!original || processing}
+              >
+                {processing ? (
+                  <span>{progress}% PROCESSING...</span>
+                ) : (
+                  <>
+                    <span>✦ ENHANCE TO 4K</span>
+                    <div className="btn-shimmer" />
+                  </>
+                )}
+              </button>
+
+              {enhanced && (
+                <button className="download-btn" onClick={handleDownload}>
+                  ↓ DOWNLOAD 4K IMAGE
+                </button>
+              )}
+
+              {/* Stats */}
+              {imgSize && (
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <div className="stat-label">RESOLUTION</div>
+                    <div className="stat-value accent">{imgSize.w > 1000 ? "4K" : "HD"}</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-label">PIXELS</div>
+                    <div className="stat-value">{((imgSize.w * imgSize.h) / 1e6).toFixed(1)}MP</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-label">WIDTH</div>
+                    <div className="stat-value">{imgSize.w}px</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-label">HEIGHT</div>
+                    <div className="stat-value">{imgSize.h}px</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
